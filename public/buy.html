@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+
+<!--
+  Materializer is a project built with Firebase, Boostrap 5, and Stripe. It allows users to
+  create ultra-simple product listings to buy prints of an image.
+-->
+<!-- Head -->
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    name="description"
+    content="Materializer is the easiest place to buy prints online"
+  />
+  <meta name="author" content="VivaLaPanda" />
+  <link rel="icon" href="favicon.ico" />
+
+  <title>Materializer</title>
+
+  <!-- Bootstrap core CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+    crossorigin="anonymous"
+  />
+
+  <!-- FontAwesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+
+  <!-- Custom styles for this template -->
+  <link href="css/style.css" rel="stylesheet" />
+
+  <!-- FirebaseUI -->
+  <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+  <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" /> 
+</head>
+
+<!-- Body -->
+<!--
+   This is the buy.html page. If the users vists without a product id in the query string, it will
+   prompt them to upload a new image, and create a new product using that image.
+
+   If there is a product id, it will show an ultra-simple product page and a link to buy the product via Stripe
+-->
+<body>
+  <!-- Create Product Section (only show if no product ID in query string) -->
+  <div class="container" id="create-product">
+    <!-- Drag and drop for image -->
+    <!-- Button to submit and create -->
+  </div>
+
+
+  <!-- Create Product Section (only show if product ID in query string) -->
+  <div class="container" id="create-product">
+    <!-- Product Images -->
+    <!-- Selector for what size print to buy -->
+    <!-- Button to buy -->
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer mt-auto py-3 bg-light">
+    <div class="container">
+      <span class="text-muted">Materializer is made by
+        <a href="https://twitter.com/VivaLaPanda_" target="_blank">VivaLaPanda</a>
+      </span>
+    </div>
+  </footer>
+
+  <!-- Bootstrap core JavaScript -->
+  <!-- Placed at the end of the document so the pages load faster -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"
+  ></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-storage-compat.js"></script>
+  <script>
+    const firebaseApp = firebase.initializeApp({
+      apiKey: "AIzaSyBCQXO2IUoE5XeARr5BDuN601M0paf4jSY",
+      authDomain: "mouthsounds-moe.firebaseapp.com",
+      projectId: "mouthsounds-moe",
+      storageBucket: "mouthsounds-moe.appspot.com",
+      messagingSenderId: "643261390473",
+      appId: "1:643261390473:web:f8413b40f7586cd1f13058",
+      measurementId: "G-7GB1WEJX2Q",
+    });
+    const db = firebaseApp.firestore();
+    const auth = firebaseApp.auth();
+    const storageRef = firebase.storage().ref();
+  </script>
+  <!-- Custom JS -->
+  <script src="js/script.js"></script>
+  <script src="js/recorder.js"></script>
+</body>
