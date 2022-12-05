@@ -41,6 +41,28 @@
   <!-- FirebaseUI -->
   <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
   <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" /> 
+
+
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-storage-compat.js"></script>
+  <script>
+    const firebaseApp = firebase.initializeApp({
+      apiKey: "AIzaSyDlOD-rM0OKu3iKvNpGFDsJn8vwgchqfec",
+      authDomain: "materializer-io.firebaseapp.com",
+      projectId: "materializer-io",
+      storageBucket: "materializer-io.appspot.com",
+      messagingSenderId: "625944504041",
+      appId: "1:625944504041:web:686b8d76a925c94a267278",
+      measurementId: "G-T120BFMJXP"
+    });
+    const db = firebaseApp.firestore();
+    const auth = firebaseApp.auth();
+    const storageRef = firebase.storage().ref();
+  </script>
 </head>
 
 <!-- Body -->
@@ -53,16 +75,247 @@
 <body>
   <!-- Create Product Section (only show if no product ID in query string) -->
   <div class="container" id="create-product">
+    <!-- Product title form field (required) -->
+    <div class="row">
+      <div class="col-md-12">
+        <div class="form-floating mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="product-title"
+            placeholder="Product Title"
+          />
+          <label for="product-title">Product Title</label>
+        </div>
+      </div>
+    </div>
     <!-- Drag and drop for image -->
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Upload an image</h5>
+            <p class="card-text">
+              Drag and drop an image here to upload it to Materializer
+            </p>
+            <div class="dropzone" id="dropzone"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      // Native JS logic for drag and drop to upload image
+      const dropzone = document.getElementById("dropzone");
+      dropzone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropzone.classList.add("dragover");
+      });
+      dropzone.addEventListener("dragleave", (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("dragover");
+      });
+      dropzone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        // Get the product title
+        const productTitle = document.getElementById("product-title")
+          .value;
+        // Make sure the product title is not empty
+        if (productTitle === "") {
+          alert("Please enter a product title");
+          return;
+        }
+        dropzone.classList.remove("dragover");
+        const file = e.dataTransfer.files[0];
+        uploadImage(file, productTitle);
+      });
+
+      // Upload image to Firebase Storage
+      function uploadImage(file, productTitle) {
+        // Sign in anonymously
+        auth.signInAnonymously().then(() => {
+          // create a unique id for the image
+          const id = Math.random().toString(36).substring(2);
+          // Create the filename for the image
+          const filename = `${id}-${file.name}`;
+          const uploadTask = storageRef.child("images/" + filename).put(file);
+          uploadTask.on(
+            "state_changed",
+            (snapshot) => {
+              // Observe state change events such as progress, pause, and resume
+              // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+              const progress =
+                (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              console.log("Upload is " + progress + "% done");
+              switch (snapshot.state) {
+                case firebase.storage.TaskState.PAUSED: // or 'paused'
+                  console.log("Upload is paused");
+                  break;
+                case firebase.storage.TaskState.RUNNING: // or 'running'
+                  console.log("Upload is running");
+                  break;
+              }
+            },
+            (error) => {
+              // Handle unsuccessful uploads
+            },
+            () => {
+              // Handle successful uploads on complete
+              uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                console.log("File available at", downloadURL);
+                createProduct(downloadURL, productTitle);
+              });
+            }
+          );
+        });
+      }
+
+      // Create a new product in Firestore
+      function createProduct(url, title) {
+        db.collection("products")
+          .add({
+            image: url,
+            title: title,
+          })
+          .then((docRef) => {
+            console.log("Document written with ID: ", docRef.id);
+            window.location.href = `buy.html?product=${docRef.id}`;
+          })
+          .catch((error) => {
+            console.error("Error adding document: ", error);
+          });
+      }
+    </script>
+    <style>
+      .dropzone {
+        width: 100%;
+        height: 200px;
+        border: 2px dashed #ccc;
+        border-radius: 5px;
+        text-align: center;
+        line-height: 200px;
+        font-size: 20px;
+        color: #ccc;
+      }
+      .dropzone.dragover {
+        border-color: #000;
+        color: #000;
+      }
+    </style>
     <!-- Button to submit and create -->
   </div>
 
 
-  <!-- Create Product Section (only show if product ID in query string) -->
-  <div class="container" id="create-product">
+  <!-- View Product Section (only show if product ID in query string) -->
+  <div class="container" id="view-product" style="display: none;">
     <!-- Product Images -->
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title" id="product-title">Product</h5>
+            <p class="card-text">
+              <img id="product-image" src="" />
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      // Get product ID from query string
+      const urlParams = new URLSearchParams(window.location.search);
+      const productId = urlParams.get("product");
+      if (productId) {
+        // Show view product section
+        document.getElementById("create-product").style.display = "none";
+        document.getElementById("view-product").style.display = "block";
+        // Get product from Firestore
+        db.collection("products")
+          .doc(productId)
+          .get()
+          .then((doc) => {
+            if (doc.exists) {
+              console.log("Document data:", doc.data());
+              document.getElementById("product-image").src = doc.data().image;
+              // Set title
+              document.getElementById("product-title").innerText =
+                doc.data().title;
+            } else {
+              // doc.data() will be undefined in this case
+              console.log("No such document!");
+            }
+          })
+          .catch((error) => {
+            console.log("Error getting document:", error);
+          });
+      }
+    </script>
     <!-- Selector for what size print to buy -->
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Select a size</h5>
+            <p class="card-text">
+              <select id="size">
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+              </select>
+            </p>
+          </div>
+        </div>
+      </div>
     <!-- Button to buy -->
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Buy</h5>
+            <p class="card-text">
+              <button id="buy-button" class="btn btn-primary">Buy</button>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      // if stripeProductId isn't set yet, disable the buy button and
+      // wait for the Stripe product to be created
+      db.collection("products")
+          .doc(productId)
+          .onSnapshot((doc) => {
+            if (doc.exists) {
+              if (doc.data().stripeProductId) {
+                document.getElementById("buy-button").disabled = false;
+              } else {
+                document.getElementById("buy-button").disabled = true;
+              }
+            }
+          });
+      // Buy button
+      document.getElementById("buy-button").addEventListener("click", () => {
+        const size = document.getElementById("size").value;
+        console.log("Buying product", productId, "in size", size);
+        // Get the stripeProductId from Firestore
+        db.collection("products")
+          .doc(productId)
+          .get()
+          .then((doc) => {
+            if (doc.exists) {
+              console.log("Document data:", doc.data());
+              // get the paymentLink from the product and open it in a new window
+              const paymentLink = doc.data().paymentLink;
+              window.open(paymentLink, "_blank");
+            } else {
+              // doc.data() will be undefined in this case
+              console.log("No such document!");
+            }
+          })
+          .catch((error) => {
+            console.log("Error getting document:", error);
+          });
+      });
+    </script>
   </div>
 
   <!-- Footer -->
@@ -81,26 +334,6 @@
     integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
     crossorigin="anonymous"
   ></script>
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-storage-compat.js"></script>
-  <script>
-    const firebaseApp = firebase.initializeApp({
-      apiKey: "AIzaSyBCQXO2IUoE5XeARr5BDuN601M0paf4jSY",
-      authDomain: "mouthsounds-moe.firebaseapp.com",
-      projectId: "mouthsounds-moe",
-      storageBucket: "mouthsounds-moe.appspot.com",
-      messagingSenderId: "643261390473",
-      appId: "1:643261390473:web:f8413b40f7586cd1f13058",
-      measurementId: "G-7GB1WEJX2Q",
-    });
-    const db = firebaseApp.firestore();
-    const auth = firebaseApp.auth();
-    const storageRef = firebase.storage().ref();
-  </script>
   <!-- Custom JS -->
-  <script src="js/script.js"></script>
-  <script src="js/recorder.js"></script>
+  <!-- <script src="js/script.js"></script> -->
 </body>

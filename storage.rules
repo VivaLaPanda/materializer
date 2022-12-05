@@ -1,11 +1,9 @@
-// Allow all users to upload files, edit their own files, and read anybody's files
+// Firebase storage rule that allows anon users to upload any file, but delete no files
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Files look like: "user/<UID>/path/to/file.txt"
-    match /user/{userId}/{allPaths=**} {
-      allow read;
-      allow write: if request.auth.uid == userId;
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
