@@ -165,8 +165,8 @@
         auth.signInAnonymously().then(() => {
           // create a unique id for the image
           const id = Math.random().toString(36).substring(2);
-          // Create the filename for the image
-          const filename = `${id}-${file.name}`;
+          // Create the filename for the image (e.g. 12345.png)
+          const filename = `${id}.${file.name.split(".").pop()}`;
           const uploadTask = storageRef.child("images/" + filename).put(file);
           uploadTask.on(
             "state_changed",
@@ -208,7 +208,7 @@
           })
           .then((docRef) => {
             console.log("Document written with ID: ", docRef.id);
-            window.location.href = `buy.html?product=${docRef.id}`;
+            window.location.href = `?product=${docRef.id}`;
           })
           .catch((error) => {
             console.error("Error adding document: ", error);
@@ -250,35 +250,6 @@
         </div>
       </div>
     </div>
-    <script>
-      // Get product ID from query string
-      const urlParams = new URLSearchParams(window.location.search);
-      const productId = urlParams.get("product");
-      if (productId) {
-        // Show view product section
-        document.getElementById("create-product").style.display = "none";
-        document.getElementById("view-product").style.display = "block";
-        // Get product from Firestore
-        db.collection("products")
-          .doc(productId)
-          .get()
-          .then((doc) => {
-            if (doc.exists) {
-              console.log("Document data:", doc.data());
-              document.getElementById("product-image").src = doc.data().image;
-              // Set title
-              document.getElementById("product-title").innerText =
-                doc.data().title;
-            } else {
-              // doc.data() will be undefined in this case
-              console.log("No such document!");
-            }
-          })
-          .catch((error) => {
-            console.log("Error getting document:", error);
-          });
-      }
-    </script>
     <!-- Selector for what size print to buy -->
     <div class="row">
       <div class="col-md-12">
@@ -309,42 +280,70 @@
       </div>
     </div>
     <script>
-      // if stripeProductId isn't set yet, disable the buy button and
-      // wait for the Stripe product to be created
-      db.collection("products")
-          .doc(productId)
-          .onSnapshot((doc) => {
-            if (doc.exists) {
-              if (doc.data().stripeProductId) {
-                document.getElementById("buy-button").disabled = false;
-              } else {
-                document.getElementById("buy-button").disabled = true;
-              }
-            }
-          });
-      // Buy button
-      document.getElementById("buy-button").addEventListener("click", () => {
-        const size = document.getElementById("size").value;
-        console.log("Buying product", productId, "in size", size);
-        // Get the stripeProductId from Firestore
+      // Get product ID from query string
+      const urlParams = new URLSearchParams(window.location.search);
+      const productId = urlParams.get("product");
+      if (productId) {
+        // Show view product section
+        document.getElementById("create-product").style.display = "none";
+        document.getElementById("view-product").style.display = "block";
+        // if stripeProductId isn't set yet, disable the buy button and
+        // wait for the Stripe product to be created
         db.collection("products")
-          .doc(productId)
-          .get()
-          .then((doc) => {
-            if (doc.exists) {
-              console.log("Document data:", doc.data());
-              // get the paymentLink from the product and open it in a new window
-              const paymentLink = doc.data().paymentLink;
-              window.open(paymentLink, "_blank");
-            } else {
-              // doc.data() will be undefined in this case
-              console.log("No such document!");
-            }
-          })
-          .catch((error) => {
-            console.log("Error getting document:", error);
-          });
-      });
+            .doc(productId)
+            .onSnapshot((doc) => {
+              if (doc.exists) {
+                console.log("Document data:", doc.data());
+                // Set title
+                document.getElementById("product-title").innerText =
+                  doc.data().title;
+                // if upscaledImage is set, show that instead of the original image
+                if (doc.data().upscaledImage) {
+                  document.getElementById("product-image").src =
+                    doc.data().upscaledImage;
+                } else {
+                  document.getElementById("product-image").src =
+                    doc.data().image;
+                }
+                // Hide/show the buy button based on whether the Stripe product is created
+                if (doc.data().stripeProductId) {
+                  document.getElementById("buy-button").disabled = false;
+                } else {
+                  document.getElementById("buy-button").disabled = true;
+                }
+              } else {
+                // doc.data() will be undefined in this case
+                console.log("No such document!");
+              }
+            });
+
+        // Buy button
+        // Putting this seperately to avoid constantly creating new event listeners
+        document.getElementById("buy-button").addEventListener("click", () => {
+          const size = document.getElementById("size").value;
+          console.log("Buying product", productId, "in size", size);
+          // Get the stripeProductId from Firestore
+          db.collection("products")
+            .doc(productId)
+            .get()
+            .then((doc) => {
+              if (doc.exists) {
+                console.log("Document data:", doc.data());
+                // get the paymentLink from the product and open it in a new window
+                const paymentLink = doc.data().paymentLink;
+                window.open(paymentLink, "_blank");
+              } else {
+                // doc.data() will be undefined in this case
+                console.log("No such document!");
+              }
+            })
+            .catch((error) => {
+              console.log("Error getting document:", error);
+            });
+        });
+      }
+      
+      
     </script>
   </div>
 
