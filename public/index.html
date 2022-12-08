@@ -105,17 +105,13 @@
   </nav>
   <!-- Create Product Section (only show if no product ID in query string) -->
   <div class="container" id="create-product">
-    <!-- Product title form field (required) -->
-    <div class="row">
+    <!-- Brief explination of the tool -->
+    <div class ="row">
       <div class="col-md-12">
-        <div class="form-floating mb-3">
-          <input
-            type="text"
-            class="form-control"
-            id="product-title"
-            placeholder="Product Title"
-          />
-          <label for="product-title">Product Title</label>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Create a new product</h5>
+          </div>
         </div>
       </div>
     </div>
@@ -125,8 +121,19 @@
         <div class="card">
           <div class="card-body">
             <h5 class="card-title">Upload an image</h5>
+            <!-- Product title form field (required) -->
+            <div class="form-floating mb-3">
+              <input
+                type="text"
+                class="form-control"
+                id="product-title"
+                placeholder="Product Title"
+              />
+              <label for="product-title">Product Title</label>
+            </div>
             <p class="card-text">
-              Drag and drop an image here to upload it to Materializer
+              Drag and drop an image here to upload it to Materializer and we'll immediately
+              make a product page for you (yes that's really it)
             </p>
             <div class="dropzone" id="dropzone"></div>
           </div>
@@ -306,10 +313,14 @@
                     doc.data().image;
                 }
                 // Hide/show the buy button based on whether the Stripe product is created
-                if (doc.data().stripeProductId) {
+                // and the image has been upscaled
+                if (doc.data().stripeProductId && doc.data().upscaledImage) {
                   document.getElementById("buy-button").disabled = false;
                 } else {
                   document.getElementById("buy-button").disabled = true;
+                  // If you hover over the button, it will show you why it's disabled
+                  document.getElementById("buy-button").title =
+                    "The product is still being processed";
                 }
               } else {
                 // doc.data() will be undefined in this case

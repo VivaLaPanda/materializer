@@ -21,6 +21,12 @@ const returnAddress = defineSecret("RETURN_ADDRESS");
 // // Start writing functions
 // // https://firebase.google.com/docs/functions/typescript
 
+admin.initializeApp({
+  credential: admin.credential.applicationDefault(),
+  databaseURL: "https://materializer-io.firebaseio.com",
+  storageBucket: "materializer-io.appspot.com",
+});
+
 // Create a Firebase function to create a new Stripe product
 //  when a new product is created in Firestore
 export const createStripeProduct = functions
@@ -98,11 +104,6 @@ export const upscaleImage = functions
       const product = snap.data();
       const imageUrl = product.image;
 
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-        databaseURL: "https://materializer-io.firebaseio.com",
-      });
-
       // Hit the raw Replicate endpoint since the NodeJS library is broken
       const upscaleResp = await fetch("https://api.replicate.com/v1/predictions", {
         method: "POST",
@@ -137,12 +138,12 @@ export const upscaleImage = functions
 
       // Get the blob from the image at the upscaledUrl
       const response = await fetch(prediction.output);
-      const blob = await response.blob();
+      const blob = await response.body;
 
       // Upload the blob to Firebase Storage
       const storageRef = admin.storage().bucket();
       const file = storageRef.file(`upscaled/${context.params.productId}.png`);
-      await file.save(await blob.text());
+      await file.save(blob.read());
 
       // Get the public URL for the upscaled image
       const publicUrl = await file.getSignedUrl({
@@ -175,11 +176,6 @@ export const createGelatoOrder = functions
       const gelatoApiKey = gelatoSecret.value();
       const stripe = new Stripe(stripeSecret.value(),
           {apiVersion: "2022-11-15"});
-
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-        databaseURL: "https://materializer-io.firebaseio.com",
-      });
 
       // https://stripe.com/docs/api/checkout/sessions/object
       // Check to make sure it's a valid webhook
@@ -255,7 +251,7 @@ export const createGelatoOrder = functions
               "files": [
                 {
                   "type": "default",
-                  "url": product.image,
+                  "url": product.upscaledImage,
                 },
               ],
               "quantity": 1,
