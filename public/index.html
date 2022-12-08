@@ -136,6 +136,16 @@
               make a product page for you (yes that's really it)
             </p>
             <div class="dropzone" id="dropzone"></div>
+            <!-- Submit Button -->
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="submit-button"
+              onclick="submitForm()"
+              disabled
+            >
+              Submit
+            </button>
           </div>
         </div>
       </div>
@@ -143,6 +153,7 @@
     <script>
       // Native JS logic for drag and drop to upload image
       const dropzone = document.getElementById("dropzone");
+      var file;
       dropzone.addEventListener("dragover", (e) => {
         e.preventDefault();
         dropzone.classList.add("dragover");
@@ -153,18 +164,29 @@
       });
       dropzone.addEventListener("drop", (e) => {
         e.preventDefault();
+        dropzone.classList.remove("dragover");
+        file = e.dataTransfer.files[0];
+        // Figure out the width and height of the image
+        const img = new Image();
+        // Show a preview of the image in the dropzone and enable the submit button
+        dropzone.innerHTML = `<img src="${URL.createObjectURL(
+          file
+        )}" class="img-fluid" alt="Responsive image" />`;
+        document.getElementById("submit-button").disabled = false;
+      });
+
+      function submitForm() {
         // Get the product title
-        const productTitle = document.getElementById("product-title")
-          .value;
+        const productTitle = document.getElementById("product-title").value;
         // Make sure the product title is not empty
         if (productTitle === "") {
           alert("Please enter a product title");
           return;
         }
-        dropzone.classList.remove("dragover");
-        const file = e.dataTransfer.files[0];
+
+        // Upload the image to Firebase Storage
         uploadImage(file, productTitle);
-      });
+      }
 
       // Upload image to Firebase Storage
       function uploadImage(file, productTitle) {

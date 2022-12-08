@@ -95,6 +95,7 @@ export const createStripeProduct = functions
     }
     );
 
+
 // Firebase function to use https://replicate.com/nightmareai/real-esrgan to
 // upscale images when a new product is created in Firestore
 export const upscaleImage = functions
@@ -115,6 +116,7 @@ export const upscaleImage = functions
           version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
           input: {
             image: imageUrl,
+            scale: 2,
           },
         }),
       });
@@ -138,12 +140,12 @@ export const upscaleImage = functions
 
       // Get the blob from the image at the upscaledUrl
       const response = await fetch(prediction.output);
-      const blob = await response.body;
+      const buffer = await response.buffer();
 
       // Upload the blob to Firebase Storage
       const storageRef = admin.storage().bucket();
       const file = storageRef.file(`upscaled/${context.params.productId}.png`);
-      await file.save(blob.read());
+      await file.save(buffer);
 
       // Get the public URL for the upscaled image
       const publicUrl = await file.getSignedUrl({
